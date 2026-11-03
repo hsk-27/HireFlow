@@ -1,0 +1,16 @@
+package com.hireflow.company;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface CompanyRepository extends JpaRepository<Company, UUID> {
+    Page<Company> findByCompanyStatus(CompanyStatus companyStatus, Pageable pageable);
+    long countByCompanyStatus(CompanyStatus companyStatus);
+    Optional<Company> findByNameIgnoreCase(String name);
+}

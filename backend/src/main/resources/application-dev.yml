@@ -1,0 +1,16 @@
+# Development Profile
+spring:
+  jpa:
+    show-sql: false
+  flyway:
+    enabled: true
+
+hireflow:
+  seed:
+    enabled: true
+
+logging:
+  level:
+    com.hireflow: DEBUG
+    org.springframework.security: INFO
+    org.flywaydb: INFO

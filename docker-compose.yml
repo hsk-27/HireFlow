@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hireflow-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: hireflow
+      POSTGRES_USER: hireflow
+      POSTGRES_PASSWORD: hireflow_secret_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hireflow -d hireflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hireflow-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hireflow-backend
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/hireflow
+      SPRING_DATASOURCE_USERNAME: hireflow
+      SPRING_DATASOURCE_PASSWORD: hireflow_secret_password
+      HIREFLOW_JWT_SECRET: c2VjdXJlLWhpcmVmbG93LXByb2R1Y3Rpb24tand0LXNpZ25pbmcta2V5LTUxc2VjcmV0LWtleQ==
+      HIREFLOW_JWT_EXPIRATION_MS: 900000
+      HIREFLOW_JWT_REFRESH_EXPIRATION_MS: 604800000
+      HIREFLOW_STORAGE_TYPE: local
+      HIREFLOW_STORAGE_LOCAL_BASE_PATH: /app/uploads
+    ports:
+      - "8080:8080"
+    volumes:
+      - backend_uploads:/app/uploads
+    networks:
+      - hireflow-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hireflow-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+      - "80:80"
+    networks:
+      - hireflow-network
+
+volumes:
+  postgres_data:
+    driver: local
+  backend_uploads:
+    driver: local
+
+networks:
+  hireflow-network:
+    driver: bridge

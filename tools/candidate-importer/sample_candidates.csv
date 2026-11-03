@@ -1,0 +1,5 @@
+full_name,email,phone,current_company,current_designation,years_of_experience,location,skills,source
+Alice Walker,alice.walker@example.com,+1-555-0144,DataStream Systems,Lead Architect,7.5,San Francisco,Java;Spring Boot;PostgreSQL,LinkedIn
+Bob Vance,bob.vance@example.com,+1-555-0145,Vance Refrigeration,Senior DevOps,5.0,Austin,Docker;Kubernetes;AWS,Referral
+Charlie Brown,charlie.brown@example.com,,Acme Corp,Frontend Developer,3.0,New York,React;TypeScript;Tailwind,GitHub
+Diana Prince,diana.prince@example.com,+1-555-0147,Themyscira Tech,Full Stack Developer,4.2,Remote,Python;React;SQL,Direct Sourcing

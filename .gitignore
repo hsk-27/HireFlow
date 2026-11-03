@@ -1,0 +1,29 @@
+# HireFlow Root Git Ignore
+target/
+*.class
+*.jar
+*.war
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.cache/
+frontend/coverage/
+
+# Python
+tools/candidate-importer/__pycache__/
+tools/candidate-importer/.pytest_cache/
+tools/candidate-importer/.venv/
+*.pyc
+
+# Data & Secrets
+data/uploads/*
+!data/uploads/.gitkeep
+.env
+*.log
+docker_postgres_data/
