@@ -113,3 +113,49 @@ Delivered complete documentation suite in `docs/`:
 10. `KNOWN_LIMITATIONS.md`: Architectural tradeoffs and future roadmap.
 11. `DEVELOPMENT_GUIDE.md`: Developer contribution standards and coding conventions.
 12. `README.md`: Portfolio-grade root readme with quick-start and demo credentials.
+
+---
+
+## 4. Phase 4: Recursive Audit, Consistency Harmonization & Defect Resolution
+
+A recursive deep-scan of every API endpoint, request/response payload, database entity, and frontend view was conducted. All identified inconsistencies and potential runtime issues were resolved:
+
+1. **Application Pipeline & Review Route Harmonization:**
+   - Exposed `@PatchMapping("/{id}/status")` on `RecruiterApplicationController` accepting query parameters (`?status=...&notes=...`) and JSON body in addition to `/transition`.
+   - Enhanced `ApplicationDto` with `@JsonProperty` aliases for `status`, `appliedAt`, `eligibilityReason`, and `resumeUrl` (`/api/v1/candidate/resume/{id}/download`).
+   - Enhanced `ApplicationStatusHistoryDto` with `@JsonProperty` aliases for `fromStatus`, `toStatus`, and `changedAt`.
+
+2. **Interview Scheduling & Scorecard Score Aliases:**
+   - Enhanced `ScheduleInterviewRequest` with `@JsonAlias({"scheduledStartTime", "scheduledStart"})`, `@JsonAlias({"scheduledEndTime", "scheduledEnd"})`, and `@JsonAlias({"locationUrl", "meetingLink"})`.
+   - Enhanced `InterviewDto` with `@JsonProperty` accessors for `status`, `scheduledStartTime`, `scheduledEndTime`, and `locationUrl`.
+   - Enhanced `SubmitFeedbackRequest` with `@JsonAlias` for `technicalScore`, `communicationScore`, `problemSolvingScore`, and `detailedNotes`.
+   - Enhanced `InterviewFeedbackDto` with `@JsonProperty` accessors for `technicalScore`, `communicationScore`, `problemSolvingScore`, and `detailedNotes`.
+
+3. **Offer Lifecycle & Direct Issuance:**
+   - Added direct route `@PostMapping("/offers")` on `RecruiterOfferController` to create and formally issue employment offers in a single atomic transaction.
+   - Enhanced `CreateOfferRequest` with `@JsonAlias` for `salary`, `startDate`, `expirationDate`, `terms`, and `applicationId`, with resilient defaults for optional parameters.
+   - Enhanced `OfferDto` with `@JsonProperty` aliases for `status`, `salary`, `startDate`, and `expirationDate`.
+   - Supported both request body and query parameter reasons on `POST /recruiter/offers/{id}/withdraw`.
+
+4. **Talent Pool Sourcing & Multi-format CSV Imports:**
+   - Supported both `/recruiter/talent-pool` and `/recruiter/talent-pool/leads` routes on `TalentPoolController`.
+   - Added `PATCH /recruiter/talent-pool/leads/{id}/status` pipeline status update handler.
+   - Built multipart CSV upload streaming parser `importFromCsv` supporting dynamic header matching (`first_name`, `last_name`, `email`, `phone_number`, `current_company`, `current_title`, `years_experience`, `skills`).
+   - Enhanced `CreateLeadRequest` with `@JsonCreator` constructor to seamlessly deserialize both full names and separate first/last names, phone numbers, job titles, and comma-separated or array skills.
+   - Added `@JsonProperty` aliases to `TalentLeadDto` (`firstName`, `lastName`, `phoneNumber`, `currentTitle`, `yearsExperience`, `status`) and `BulkImportResultDto` (`successfulImports`, `skippedCount`).
+
+5. **Notification Real-Time State & Filter Synchronization:**
+   - Added `findByUserIdAndReadAtIsNullOrderByCreatedAtDesc` to `NotificationRepository`.
+   - Added `unreadOnly` parameter support to `GET /notifications`.
+   - Supported both POST and PATCH for `/{id}/read` and `/read-all`, returning the updated notification object and count.
+   - Added `@JsonProperty("read")` boolean accessor and `@JsonProperty("type")` string alias to `NotificationDto`.
+
+6. **Frontend Runtime Array & PagedResponse Safety:**
+   - Normalized collections across `RecruiterDashboard.tsx`, `RecruiterInterviewsPage.tsx`, `RecruiterOffersPage.tsx`, `CandidateOffersPage.tsx`, `RecruiterTalentPoolPage.tsx`, and `NotificationsPage.tsx` using `Array.isArray(x) ? x : x?.content || []`.
+   - Resolved implicit `any` parameter types in recruiter dashboard analytics counters.
+
+7. **Verification & Test Suite Health:**
+   - Backend: 21 unit & integration tests passing (`BUILD SUCCESS`).
+   - Frontend: TypeScript 5.5 + Vite production build passed with 0 errors; Vitest component tests passed with 100% success.
+   - Secondary CLI Tool: 9 pytest test cases passed in 0.23s.
+   - Git repository initialized and clean initial commit created.
