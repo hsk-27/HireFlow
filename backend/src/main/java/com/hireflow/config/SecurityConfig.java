@@ -88,7 +88,8 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/jobs",
-                                "/api/v1/jobs/{id}"
+                                "/api/v1/jobs/{id}",
+                                "/api/v1/documents/**"
                         ).permitAll()
                         .requestMatchers(
                                 "/v3/api-docs/**",
@@ -101,6 +102,8 @@ public class SecurityConfig {
                         // Role-specific Endpoints
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/recruiter/**").hasRole("RECRUITER")
+                        .requestMatchers("/api/v1/companies/**").hasRole("RECRUITER")
+                        .requestMatchers("/api/v1/candidate/resume/*/download").authenticated()
                         .requestMatchers("/api/v1/candidate/**").hasRole("CANDIDATE")
 
                         // Authenticated General Endpoints

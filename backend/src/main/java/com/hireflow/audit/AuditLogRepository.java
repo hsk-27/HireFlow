@@ -15,8 +15,8 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
     @Query("SELECT a FROM AuditLog a WHERE " +
            "(:actorUserId IS NULL OR a.actorUserId = :actorUserId) AND " +
            "(:companyId IS NULL OR a.companyId = :companyId) AND " +
-           "(:action IS NULL OR LOWER(a.action) = LOWER(:action)) AND " +
-           "(:entityType IS NULL OR LOWER(a.entityType) = LOWER(:entityType)) " +
+           "(:action IS NULL OR :action = '' OR LOWER(a.action) LIKE LOWER(CONCAT('%', :action, '%'))) AND " +
+           "(:entityType IS NULL OR :entityType = '' OR LOWER(a.entityType) = LOWER(:entityType)) " +
            "ORDER BY a.createdAt DESC")
     Page<AuditLog> findFiltered(
             @Param("actorUserId") UUID actorUserId,

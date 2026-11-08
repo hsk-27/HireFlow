@@ -48,6 +48,15 @@ class ApplicationStateMachineTest {
     }
 
     @Test
+    @DisplayName("Candidate can accept or decline offer when in OFFERED status")
+    void testCandidateOfferResponse() {
+        assertDoesNotThrow(() -> stateMachine.validateTransition(
+                ApplicationStatus.OFFERED, ApplicationStatus.HIRED, Role.CANDIDATE));
+        assertDoesNotThrow(() -> stateMachine.validateTransition(
+                ApplicationStatus.OFFERED, ApplicationStatus.OFFER_DECLINED, Role.CANDIDATE));
+    }
+
+    @Test
     @DisplayName("Candidate cannot perform recruiter transitions")
     void testCandidateIllegalTransition() {
         assertThrows(InvalidStateTransitionException.class, () -> stateMachine.validateTransition(

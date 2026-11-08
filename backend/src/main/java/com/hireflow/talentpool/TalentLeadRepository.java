@@ -20,7 +20,7 @@ public interface TalentLeadRepository extends JpaRepository<TalentLead, UUID> {
     @Query("SELECT l FROM TalentLead l WHERE " +
            "l.company.id = :companyId AND " +
            "(:status IS NULL OR l.leadStatus = :status) AND " +
-           "(:search IS NULL OR LOWER(l.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "(:search IS NULL OR :search = '' OR LOWER(l.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            " LOWER(l.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            " LOWER(l.skills) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            " LOWER(l.currentDesignation) LIKE LOWER(CONCAT('%', :search, '%'))) " +

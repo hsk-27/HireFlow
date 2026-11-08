@@ -155,7 +155,41 @@ A recursive deep-scan of every API endpoint, request/response payload, database 
    - Resolved implicit `any` parameter types in recruiter dashboard analytics counters.
 
 7. **Verification & Test Suite Health:**
-   - Backend: 21 unit & integration tests passing (`BUILD SUCCESS`).
-   - Frontend: TypeScript 5.5 + Vite production build passed with 0 errors; Vitest component tests passed with 100% success.
-   - Secondary CLI Tool: 9 pytest test cases passed in 0.23s.
+   - Backend: 29 unit & integration tests passing (`BUILD SUCCESS`).
+   - Frontend: TypeScript 5.5 + Vite production build passed with 0 errors; 15 Vitest component tests passed with 100% success.
+   - Secondary CLI Tool: 9 pytest test cases passed in 0.52s.
    - Git repository initialized and clean initial commit created.
+
+---
+
+## Phase 5 — Automated Integration Testing, Security Hardening & Edge-Case Resolution
+
+1. **Security & Authorization Hardening:**
+   - Resolved recruiter resume download authorization in `SecurityConfig`: recruiters reviewing applicants were previously encountering 403 Forbidden because `/api/v1/candidate/**` was restricted strictly to `ROLE_CANDIDATE`. Added `.requestMatchers("/api/v1/candidate/resume/*/download").authenticated()` ahead of the candidate matcher.
+   - Created `DocumentController.java` mapping `GET /api/v1/documents/{documentId}/download` to serve company logos and uploaded public assets with proper MIME types.
+   - Permitted public access to `GET /api/v1/documents/**`.
+   - Multi-path bindings added for company management (`/api/v1/companies`, `/api/v1/recruiter/company`, `/api/v1/recruiter/companies`).
+
+2. **Application State Machine Catch-22 Resolution:**
+   - Resolved state-machine defect in `ApplicationStateMachine.java`: candidate offer responses (`OFFERED -> HIRED` and `OFFERED -> OFFER_DECLINED`) were previously failing with `InvalidStateTransitionException: Candidates are only permitted to withdraw their application`. Candidate offer acceptance and declining were explicitly authorized while enforcing that the application must be in `OFFERED` status.
+
+3. **Global Exception Handling Enhancements:**
+   - Added specific handlers in `GlobalExceptionHandler.java` for `MethodArgumentTypeMismatchException` (e.g. invalid enums or malformed UUIDs returning 400 Bad Request with descriptive message), `MissingServletRequestParameterException` (400 Bad Request), `HttpMessageNotReadableException` (400 Bad Request), and `HttpRequestMethodNotSupportedException` (405 Method Not Allowed), preventing internal 500 exceptions from reaching clients.
+
+4. **Repository Filtering & Query Parameter Robustness:**
+   - Enhanced `AuditLogRepository`, `ApplicationRepository`, and `TalentLeadRepository` queries to handle empty-string parameters (`:param IS NULL OR :param = ''`) and partial-string matching for admin action filtering.
+
+5. **DTO Serialization & Alignment:**
+   - Added `@JsonProperty("fullName")` in `UserDto.java`.
+   - Added `@JsonProperty("status")` in `CompanyDto.java`.
+
+6. **Automated Integration Test Suites Created & Passing:**
+   - `AuthControllerIntegrationTest.java`: Complete candidate and recruiter authentication lifecycles, refresh token rotation, bad credentials rejection.
+   - `RecruitmentLifecycleIntegrationTest.java`: Full end-to-end flow from company registration to offer acceptance and hire.
+   - `AdminCompanyIntegrationTest.java`: Complete administrative governance lifecycle (company approvals, rejections with reason, suspensions, audit event trail, and non-admin role security guards).
+   - `TalentPoolIntegrationTest.java`: Lead creation, search, status progression, CSV bulk ingestion with duplicate detection, tenant isolation, and invalid enum validation.
+
+7. **Frontend Test Suite Expansion:**
+   - Added Vitest suites for `Badge.tsx`, `Modal.tsx`, and `Pagination.tsx`.
+   - Verified 15/15 Vitest component tests passing.
+   - Confirmed `tsc && vite build` compiles cleanly with zero errors.

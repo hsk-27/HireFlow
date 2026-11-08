@@ -67,9 +67,13 @@ public class ApplicationStateMachine {
 
         // Role-based restrictions
         if (actorRole == Role.CANDIDATE) {
-            if (target != ApplicationStatus.WITHDRAWN) {
+            if (target != ApplicationStatus.WITHDRAWN && target != ApplicationStatus.HIRED && target != ApplicationStatus.OFFER_DECLINED) {
                 throw new InvalidStateTransitionException(current.name(), target.name(),
-                        "Candidates are only permitted to withdraw their application");
+                        "Candidates are only permitted to withdraw their application or respond to formal job offers");
+            }
+            if ((target == ApplicationStatus.HIRED || target == ApplicationStatus.OFFER_DECLINED) && current != ApplicationStatus.OFFERED) {
+                throw new InvalidStateTransitionException(current.name(), target.name(),
+                        "Candidate can only accept or decline an application in OFFERED status");
             }
         } else if (actorRole == Role.RECRUITER) {
             if (target == ApplicationStatus.WITHDRAWN) {

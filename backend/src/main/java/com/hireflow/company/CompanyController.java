@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/companies")
+@RequestMapping({"/api/v1/companies", "/api/v1/recruiter/company", "/api/v1/recruiter/companies"})
 @Tag(name = "Companies", description = "Company management for recruiters")
 public class CompanyController {
 

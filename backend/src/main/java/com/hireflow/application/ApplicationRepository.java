@@ -29,7 +29,7 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
            "(:jobId IS NULL OR a.job.id = :jobId) AND " +
            "(:status IS NULL OR a.applicationStatus = :status) AND " +
            "(:eligibilityStatus IS NULL OR a.eligibilityStatus = :eligibilityStatus) AND " +
-           "(:search IS NULL OR LOWER(a.candidate.user.firstName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "(:search IS NULL OR :search = '' OR LOWER(a.candidate.user.firstName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            " LOWER(a.candidate.user.lastName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            " LOWER(a.candidate.user.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
            "ORDER BY a.submittedAt DESC")

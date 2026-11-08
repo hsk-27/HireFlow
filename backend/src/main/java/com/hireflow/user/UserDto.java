@@ -1,5 +1,6 @@
 package com.hireflow.user;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -15,6 +16,11 @@ public record UserDto(
         Instant createdAt,
         Instant lastLoginAt
 ) {
+    @JsonProperty("fullName")
+    public String fullName() {
+        return ((firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "")).trim();
+    }
+
     public static UserDto from(User user) {
         return new UserDto(
                 user.getId(),
