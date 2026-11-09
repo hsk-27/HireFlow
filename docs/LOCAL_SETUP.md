@@ -119,9 +119,11 @@ You can sign in immediately using any of the following seeded local accounts (or
 | Role | Email | Password | Access Capabilities |
 |---|---|---|---|
 | **Platform Administrator** | `admin@hireflow.dev` | `AdminPass123!` | Review/approve companies, inspect immutable audit logs |
-| **Verified Recruiter** | `recruiter@techcorp.com` | `RecruiterPass123!` | Manage requisitions, evaluate candidate pipeline, schedule interviews, issue offers |
-| **Pending Recruiter** | `recruiter@pending.com` | `RecruiterPass123!` | Draft jobs for a pending company awaiting admin review |
-| **Candidate** | `candidate@hireflow.dev` | `CandidatePass123!` | Browse openings, submit applications, manage profile, respond to offers |
+| **Verified Recruiter (TechCorp)** | `recruiter@techcorp.com` | `RecruiterPass123!` | Manage requisitions, evaluate candidate pipeline, schedule interviews, issue offers |
+| **Verified Recruiter (InnoSoft)** | `recruiter@innosoft.com` | `RecruiterPass123!` | Sourced talent pool, schedule rounds, manage scorecards |
+| **Pending Recruiter (PendingCo)** | `recruiter@pendingco.com` | `RecruiterPass123!` | Draft jobs for a pending company awaiting admin review |
+| **Candidate (Jane Doe)** | `jane.candidate@example.com` | `CandidatePass123!` | Browse openings, submit applications, manage profile, respond to offers |
+| **Candidate (John Smith)** | `john.smith@example.com` | `CandidatePass123!` | Junior profile, browse public openings, submit resumes |
 
 ---
 

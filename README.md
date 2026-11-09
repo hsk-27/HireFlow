@@ -113,24 +113,26 @@ Use any of these pre-seeded local credentials to test role-specific workflows (o
 | Role | Email | Password | Primary Workflow |
 |---|---|---|---|
 | **Platform Administrator** | `admin@hireflow.dev` | `AdminPass123!` | Review pending companies, inspect system audit logs |
-| **Verified Recruiter** | `recruiter@techcorp.com` | `RecruiterPass123!` | Post requisitions, progress candidate pipeline, issue offers |
-| **Pending Recruiter** | `recruiter@pending.com` | `RecruiterPass123!` | Create draft jobs awaiting admin organization approval |
-| **Candidate** | `candidate@hireflow.dev` | `CandidatePass123!` | Apply for roles, track stages, review and accept offers |
+| **Verified Recruiter (TechCorp)** | `recruiter@techcorp.com` | `RecruiterPass123!` | Post requisitions, progress candidate pipeline, issue offers |
+| **Verified Recruiter (InnoSoft)** | `recruiter@innosoft.com` | `RecruiterPass123!` | Sourced talent pool, schedule rounds, manage scorecards |
+| **Pending Recruiter (PendingCo)** | `recruiter@pendingco.com` | `RecruiterPass123!` | Create draft jobs awaiting admin organization approval |
+| **Candidate (Full Profile)** | `jane.candidate@example.com` | `CandidatePass123!` | Apply for roles, track stages, review and accept offers |
+| **Candidate (Junior Profile)** | `john.smith@example.com` | `CandidatePass123!` | Profile setup, resume upload, browse public opportunities |
 
 ---
 
 ## 6. Automated Test Suites & Verification
 
-The project includes automated tests verifying backend business logic, multi-tenant boundaries, CLI tools, and frontend UI components:
+The project includes comprehensive automated tests verifying backend business logic, multi-tenant boundaries, CLI tools, and frontend UI components:
 
 ```bash
-# Backend unit & integration tests (21 tests, 100% pass)
+# Backend unit & integration tests (29 tests, 100% pass)
 cd backend && mvn test
 
 # Python importer CLI unit tests (9 tests, 100% pass)
 cd tools/candidate-importer && pytest -v
 
-# Frontend component tests (6 tests, 100% pass)
+# Frontend component tests (15 tests across 5 test suites, 100% pass)
 cd frontend && npm test
 ```
 
@@ -149,5 +151,6 @@ Detailed architectural and engineering documentation is available in the [`docs/
 - [Docker & Orchestration Guide](docs/DOCKER_SETUP.md) (container configuration, volumes, logs)
 - [AWS Cloud Deployment Guide](docs/AWS_DEPLOYMENT.md) (ECS Fargate, RDS, S3, Secrets Manager)
 - [Testing Strategy & Report](docs/TESTING_STRATEGY.md) (coverage, test pyramid)
+- [Manual Testing & QA Guide](docs/MANUAL_TESTING_GUIDE.md) (step-by-step test paths for all roles & edge cases)
 - [Known Limitations & Roadmap](docs/KNOWN_LIMITATIONS.md) (tradeoffs, future work)
 - [Developer Contribution Guide](docs/DEVELOPMENT_GUIDE.md) (coding standards, branching)

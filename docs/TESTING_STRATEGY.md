@@ -25,12 +25,16 @@ Located in `backend/src/test/java/com/hireflow/`:
 
 | Test Class | Focus Area | Test Count | Status |
 |---|---|---|---|
-| `ApplicationStateMachineTest` | Valid transitions, illegal status jumps, terminal state checks | 10 | **PASSED** |
+| `ApplicationStateMachineTest` | Valid transitions, candidate offer acceptance/rejection, illegal status jumps, terminal state checks | 11 | **PASSED** |
 | `EligibilityEvaluationServiceTest` | CGPA boundaries, backlogs check, degree and branch white-listing | 4 | **PASSED** |
 | `TenantIsolationTest` | Verifies cross-company data access prevention (`ForbiddenException`) | 1 | **PASSED** |
 | `AuthServiceTest` | Password verification, JWT generation, refresh token rotation & revocation | 4 | **PASSED** |
 | `InterviewServiceTest` | Interview scheduling, round ordering, feedback scorecard recording | 2 | **PASSED** |
-| **Total Backend Tests** | | **21** | **100% PASS** |
+| `AuthControllerIntegrationTest` | Full candidate & recruiter auth, login, refresh-token rotation, password change, 401 rejection | 3 | **PASSED** |
+| `RecruitmentLifecycleIntegrationTest` | Full end-to-end recruitment pipeline (company approval → job publication → application → eligibility → interview → offer → hire) | 1 | **PASSED** |
+| `AdminCompanyIntegrationTest` | Administrative governance: approvals, rejections with justification, suspensions, audit trail verification, RBAC guards | 2 | **PASSED** |
+| `TalentPoolIntegrationTest` | Manual lead sourcing, multipart CSV ingestion with deduplication, status updates, tenant isolation, 400 Bad Request enum validation | 1 | **PASSED** |
+| **Total Backend Tests** | | **29** | **100% PASS** |
 
 ### 2.2 Secondary Tool Tests (Python 3 / pytest)
 Located in `tools/candidate-importer/tests/`:
@@ -54,8 +58,11 @@ Located in `frontend/src/components/common/__tests__/`:
 | Test Suite | Assertions Verified | Status |
 |---|---|---|
 | `Button.test.tsx` | Child text rendering, loading spinner state, variant styling (`danger`, `outline`) | **PASSED** |
+| `Badge.test.tsx` | Variant styling (`primary`, `success`, `warning`, `danger`, `info`, `neutral`) | **PASSED** |
 | `StatusBadge.test.tsx` | Label normalization, color-coded variants across application, offer, and company states | **PASSED** |
-| **Total Frontend Tests** | | **6** | **100% PASS** |
+| `Modal.test.tsx` | Open/closed rendering, title and children display, backdrop click, Escape key listener | **PASSED** |
+| `Pagination.test.tsx` | Boundary conditions (hidden if totalPages <= 1), previous/next page button disabling and events | **PASSED** |
+| **Total Frontend Tests** | | **15** | **100% PASS** |
 
 ---
 
