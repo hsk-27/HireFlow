@@ -44,6 +44,8 @@ export default function AppRoutes() {
         <Route path="/jobs/:id" element={<JobDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/auth/login" element={<Navigate to="/login" replace />} />
+        <Route path="/auth/register" element={<Navigate to="/register" replace />} />
 
         {/* Candidate Protected Routes */}
         <Route

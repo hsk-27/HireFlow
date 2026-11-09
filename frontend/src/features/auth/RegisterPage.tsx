@@ -71,7 +71,7 @@ export const RegisterPage: React.FC = () => {
         <h2 className="text-3xl font-bold tracking-tight text-slate-900">Create your HireFlow account</h2>
         <p className="text-sm text-slate-500">
           Already registered?{' '}
-          <Link to="/auth/login" className="font-semibold text-primary-600 hover:underline">
+          <Link to="/login" className="font-semibold text-primary-600 hover:underline">
             Sign in to your account
           </Link>
         </p>
