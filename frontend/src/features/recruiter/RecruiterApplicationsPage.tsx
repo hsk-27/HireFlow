@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { recruiterApi } from '../../services/apiServices';
-import { Application, ApplicationStatus } from '../../types';
+import { Application, ApplicationStatus, EligibilityStatus } from '../../types';
 import StatusBadge from '../../components/common/StatusBadge';
 import Button from '../../components/common/Button';
 import Modal from '../../components/common/Modal';
@@ -21,6 +21,12 @@ import {
   Award,
   ChevronRight,
   ExternalLink,
+  Download,
+  LayoutGrid,
+  List as ListIcon,
+  ArrowRight,
+  AlertCircle,
+  Briefcase,
 } from 'lucide-react';
 
 export default function RecruiterApplicationsPage() {
@@ -29,8 +35,11 @@ export default function RecruiterApplicationsPage() {
   const initialJobId = searchParams.get('jobId') || '';
 
   const [page, setPage] = useState(0);
+  const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
   const [selectedJobId, setSelectedJobId] = useState<string>(initialJobId);
   const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [selectedEligibility, setSelectedEligibility] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
@@ -53,13 +62,15 @@ export default function RecruiterApplicationsPage() {
 
   // Fetch applications
   const { data: appsResponse, isLoading, error } = useQuery({
-    queryKey: ['recruiter-applications', page, selectedJobId, selectedStatus],
+    queryKey: ['recruiter-applications', page, selectedJobId, selectedStatus, selectedEligibility, searchQuery, viewMode],
     queryFn: async () => {
       const res = await recruiterApi.getApplications({
-        page,
-        size: 10,
+        page: viewMode === 'board' ? 0 : page,
+        size: viewMode === 'board' ? 100 : 10,
         jobId: selectedJobId || undefined,
-        status: selectedStatus || undefined,
+        status: (selectedStatus as ApplicationStatus) || undefined,
+        eligibilityStatus: (selectedEligibility as EligibilityStatus) || undefined,
+        search: searchQuery || undefined,
       });
       return res.data.data;
     },
@@ -100,32 +111,140 @@ export default function RecruiterApplicationsPage() {
   const applications = appsResponse?.content || [];
   const totalPages = appsResponse?.totalPages || 0;
 
+  // Filter applications in memory for quick board search if needed
+  const filteredApps = applications.filter((app) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const nameMatch = (app.candidateName || '').toLowerCase().includes(q);
+    const emailMatch = (app.candidateEmail || '').toLowerCase().includes(q);
+    const jobMatch = (app.jobTitle || '').toLowerCase().includes(q);
+    return nameMatch || emailMatch || jobMatch;
+  });
+
+  // Export filtered applications to CSV
+  const handleExportCSV = () => {
+    if (filteredApps.length === 0) return;
+    const headers = ['Candidate Name', 'Candidate Email', 'Job Title', 'Company', 'Stage', 'Eligibility Status', 'Applied Date'];
+    const rows = filteredApps.map((a) => [
+      `"${a.candidateName || 'Candidate'}"`,
+      `"${a.candidateEmail || ''}"`,
+      `"${a.jobTitle || ''}"`,
+      `"${a.companyName || ''}"`,
+      `"${a.status || ''}"`,
+      `"${a.eligibilityStatus || ''}"`,
+      `"${new Date(a.appliedAt || Date.now()).toISOString().split('T')[0]}"`,
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `hireflow-candidates-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Pipeline board stage definitions
+  const pipelineStages: { status: ApplicationStatus; label: string; color: string }[] = [
+    { status: 'SUBMITTED', label: 'Submitted', color: 'border-t-blue-500' },
+    { status: 'UNDER_REVIEW', label: 'Under Review', color: 'border-t-amber-500' },
+    { status: 'SHORTLISTED', label: 'Shortlisted', color: 'border-t-primary-500' },
+    { status: 'INTERVIEW', label: 'Interview', color: 'border-t-purple-500' },
+    { status: 'OFFERED', label: 'Offered', color: 'border-t-copper-500' },
+    { status: 'HIRED', label: 'Hired', color: 'border-t-emerald-500' },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="border-b border-gray-200 pb-5">
-        <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl">
-          Candidate Pipeline & Applications
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Review submissions, inspect candidate credentials, evaluate eligibility, and progress stages.
-        </p>
+      {/* Page Header with Action Bar */}
+      <div className="border-b border-slate-200 pb-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+              Candidate Pipeline
+            </h1>
+            <span className="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-primary-50 text-primary-700 border border-primary-200">
+              {appsResponse?.totalElements ?? filteredApps.length} Applicants
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">
+            Screen candidates, inspect academic eligibility checks, schedule rounds, and progress pipeline stages.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 self-start md:self-auto">
+          {/* View Mode Switcher */}
+          <div className="flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition ${
+                viewMode === 'list'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <ListIcon className="w-3.5 h-3.5" /> List
+            </button>
+            <button
+              onClick={() => setViewMode('board')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition ${
+                viewMode === 'board'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" /> Pipeline Board
+            </button>
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCSV}
+            className="flex items-center gap-1.5 text-xs font-semibold"
+          >
+            <Download className="w-3.5 h-3.5" /> Export CSV
+          </Button>
+        </div>
       </div>
 
-      {/* Filter Controls */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-        <div className="flex-1">
-          <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
-            Filter by Job Requisition
+      {/* Filter Controls Bar */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        {/* Search Input */}
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+            Search Candidate
+          </label>
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Candidate name or email..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(0);
+              }}
+              className="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+        </div>
+
+        {/* Job Requisition Filter */}
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+            Job Requisition
           </label>
           <select
-            className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-primary-500 focus:ring-primary-500"
+            className="w-full rounded-lg border border-slate-300 p-1.5 text-xs focus:ring-primary-500 bg-white"
             value={selectedJobId}
             onChange={(e) => {
               setSelectedJobId(e.target.value);
               setPage(0);
             }}
           >
-            <option value="">All Job Requisitions</option>
+            <option value="">All Requisitions ({jobsData?.length || 0})</option>
             {jobsData?.map((j) => (
               <option key={j.id} value={j.id}>
                 {j.title} ({j.department || 'General'})
@@ -134,12 +253,13 @@ export default function RecruiterApplicationsPage() {
           </select>
         </div>
 
-        <div className="flex-1">
-          <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
-            Filter by Stage
+        {/* Pipeline Stage Filter (only on list view) */}
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+            Pipeline Stage
           </label>
           <select
-            className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-primary-500 focus:ring-primary-500"
+            className="w-full rounded-lg border border-slate-300 p-1.5 text-xs focus:ring-primary-500 bg-white"
             value={selectedStatus}
             onChange={(e) => {
               setSelectedStatus(e.target.value);
@@ -157,70 +277,158 @@ export default function RecruiterApplicationsPage() {
             <option value="WITHDRAWN">Withdrawn</option>
           </select>
         </div>
+
+        {/* Eligibility Status Filter */}
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+            Automated Eligibility
+          </label>
+          <select
+            className="w-full rounded-lg border border-slate-300 p-1.5 text-xs focus:ring-primary-500 bg-white"
+            value={selectedEligibility}
+            onChange={(e) => {
+              setSelectedEligibility(e.target.value);
+              setPage(0);
+            }}
+          >
+            <option value="">All Outcomes</option>
+            <option value="ELIGIBLE">Eligible</option>
+            <option value="REVIEW_REQUIRED">Review Required</option>
+            <option value="INELIGIBLE">Ineligible</option>
+          </select>
+        </div>
       </div>
 
-      {/* Applications Table */}
+      {/* Main Content Area */}
       {isLoading ? (
-        <div className="flex justify-center py-12">
+        <div className="flex justify-center py-16">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
         </div>
       ) : error ? (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
-          Failed to load applications.
+        <div className="rounded-xl bg-rose-50 border border-rose-200 p-4 text-xs font-semibold text-rose-700">
+          Failed to load candidate applications.
         </div>
-      ) : applications.length === 0 ? (
-        <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center bg-white">
-          <Users className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">No applications found</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            No candidate submissions match your current filters.
+      ) : filteredApps.length === 0 ? (
+        <div className="rounded-xl border-2 border-dashed border-slate-200 p-16 text-center bg-white space-y-2">
+          <Users className="mx-auto h-12 w-12 text-slate-300" />
+          <h3 className="text-sm font-bold text-slate-800">No applicants matching criteria</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            Try adjusting your search query, selecting another job opening, or resetting filters.
           </p>
         </div>
+      ) : viewMode === 'board' ? (
+        /* ================= PIPELINE KANBAN BOARD VIEW ================= */
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4 overflow-x-auto pb-4">
+          {pipelineStages.map((stage) => {
+            const stageApps = filteredApps.filter((a) => a.status === stage.status);
+
+            return (
+              <div
+                key={stage.status}
+                className={`bg-slate-100/70 rounded-xl p-3 border border-slate-200 border-t-4 ${stage.color} flex flex-col min-h-[500px]`}
+              >
+                {/* Column Header */}
+                <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-200/80">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    {stage.label}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-white text-slate-700 border border-slate-200 shadow-xs">
+                    {stageApps.length}
+                  </span>
+                </div>
+
+                {/* Candidate Cards in Stage */}
+                <div className="space-y-2.5 flex-1">
+                  {stageApps.map((app) => (
+                    <div
+                      key={app.id}
+                      className="bg-white rounded-lg p-3.5 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-primary-400/50 transition cursor-pointer flex flex-col justify-between space-y-2.5"
+                      onClick={() => {
+                        setSelectedApp(app);
+                        setIsDetailModalOpen(true);
+                      }}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <StatusBadge status={app.eligibilityStatus} />
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {new Date(app.appliedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <h4 className="text-xs font-bold text-slate-900 truncate">
+                          {app.candidateName || 'Candidate'}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                          {app.candidateEmail}
+                        </p>
+                        <p className="text-[11px] font-medium text-primary-700 truncate mt-1 flex items-center gap-1">
+                          <Briefcase className="w-3 h-3 text-slate-400" /> {app.jobTitle}
+                        </p>
+                      </div>
+
+                      {/* Quick Progression Button on Card */}
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <span className="text-[10px] text-slate-400">Review</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary-600" />
+                      </div>
+                    </div>
+                  ))}
+
+                  {stageApps.length === 0 && (
+                    <div className="h-28 rounded-lg border border-dashed border-slate-200 flex items-center justify-center text-[11px] text-slate-400 italic">
+                      No candidates in {stage.label}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
-            <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
+        /* ================= HIGH-DENSITY LIST VIEW ================= */
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
+            <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="px-6 py-3">Candidate</th>
-                <th className="px-6 py-3">Applied Job</th>
-                <th className="px-6 py-3">Eligibility</th>
-                <th className="px-6 py-3">Stage</th>
-                <th className="px-6 py-3">Applied On</th>
-                <th className="px-6 py-3 text-right">Actions</th>
+                <th className="px-5 py-3">Candidate</th>
+                <th className="px-5 py-3">Requisition</th>
+                <th className="px-5 py-3">Eligibility</th>
+                <th className="px-5 py-3">Stage</th>
+                <th className="px-5 py-3">Applied On</th>
+                <th className="px-5 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {applications.map((app) => (
-                <tr key={app.id} className="hover:bg-gray-50/70 transition">
-                  <td className="px-6 py-4">
-                    <div className="font-bold text-gray-900">
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {filteredApps.map((app) => (
+                <tr key={app.id} className="hover:bg-slate-50/80 transition">
+                  <td className="px-5 py-3.5">
+                    <div className="font-bold text-slate-900">
                       {app.candidateName || 'Candidate'}
                     </div>
-                    <div className="text-xs text-gray-500">{app.candidateEmail}</div>
+                    <div className="text-[11px] text-slate-500 font-mono">{app.candidateEmail}</div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900">{app.jobTitle}</div>
-                    <div className="text-xs text-gray-500">{app.companyName}</div>
+                  <td className="px-5 py-3.5">
+                    <div className="font-semibold text-slate-900">{app.jobTitle}</div>
+                    <div className="text-[11px] text-slate-500">{app.companyName}</div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-5 py-3.5">
                     <StatusBadge status={app.eligibilityStatus} />
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-5 py-3.5">
                     <StatusBadge status={app.status} />
                   </td>
-                  <td className="px-6 py-4 text-xs text-gray-500">
+                  <td className="px-5 py-3.5 text-slate-500 font-mono">
                     {new Date(app.appliedAt).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-5 py-3.5 text-right">
                     <button
                       onClick={() => {
                         setSelectedApp(app);
                         setIsDetailModalOpen(true);
                       }}
-                      className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                      className="inline-flex items-center rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:text-primary-700 transition"
                     >
-                      <Eye className="mr-1 h-3.5 w-3.5" />
-                      Inspect & Review
+                      <Eye className="mr-1 h-3.5 w-3.5 text-slate-500" /> Review
                     </button>
                   </td>
                 </tr>
@@ -238,28 +446,28 @@ export default function RecruiterApplicationsPage() {
           setIsDetailModalOpen(false);
           setSelectedApp(null);
         }}
-        title={`Application Review: ${selectedApp?.candidateName}`}
+        title={`Candidate Review: ${selectedApp?.candidateName}`}
         size="lg"
       >
         {selectedApp && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4 rounded-lg bg-gray-50 p-4 text-sm">
+            <div className="grid grid-cols-2 gap-4 rounded-xl bg-slate-50 border border-slate-200/80 p-4 text-xs">
               <div>
-                <span className="text-xs text-gray-500 block">Candidate Email</span>
-                <span className="font-semibold text-gray-900">{selectedApp.candidateEmail}</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Candidate Email</span>
+                <span className="font-semibold text-slate-900 font-mono">{selectedApp.candidateEmail}</span>
               </div>
               <div>
-                <span className="text-xs text-gray-500 block">Target Job</span>
-                <span className="font-semibold text-gray-900">{selectedApp.jobTitle}</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Target Requisition</span>
+                <span className="font-semibold text-slate-900">{selectedApp.jobTitle}</span>
               </div>
               <div>
-                <span className="text-xs text-gray-500 block">Current Stage</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Current Stage</span>
                 <div className="mt-1">
                   <StatusBadge status={selectedApp.status} />
                 </div>
               </div>
               <div>
-                <span className="text-xs text-gray-500 block">System Eligibility Check</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Automated Eligibility</span>
                 <div className="mt-1">
                   <StatusBadge status={selectedApp.eligibilityStatus} />
                 </div>
@@ -267,32 +475,40 @@ export default function RecruiterApplicationsPage() {
             </div>
 
             {selectedApp.eligibilityReason && (
-              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-                <strong>Eligibility Evaluation Notes:</strong> {selectedApp.eligibilityReason}
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 space-y-1">
+                <span className="font-bold flex items-center gap-1.5 text-amber-800">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-600" /> Eligibility Evaluation Findings:
+                </span>
+                <p className="text-[11px] leading-relaxed">{selectedApp.eligibilityReason}</p>
               </div>
             )}
 
             {selectedApp.resumeUrl && (
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                <div className="flex items-center space-x-2">
-                  <FileText className="h-5 w-5 text-primary-600" />
-                  <span className="text-sm font-medium text-gray-900">Attached Resume File</span>
+              <div className="flex items-center justify-between rounded-xl border border-slate-200 p-3 bg-white">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-primary-50 text-primary-700 flex items-center justify-center border border-primary-200">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 block">Candidate Resume Document</span>
+                    <span className="text-[10px] text-slate-400">PDF / Verified SHA-256 Checksum</span>
+                  </div>
                 </div>
                 <a
                   href={selectedApp.resumeUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center text-xs font-semibold text-primary-600 hover:text-primary-800"
+                  className="inline-flex items-center px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition"
                 >
-                  Download / View <ExternalLink className="ml-1 h-3.5 w-3.5" />
+                  Download Resume <ExternalLink className="ml-1.5 h-3 w-3" />
                 </a>
               </div>
             )}
 
             {/* Stage Progression Actions */}
-            <div className="border-t border-gray-200 pt-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-700 mb-3">
-                Progress Application Stage
+            <div className="border-t border-slate-200 pt-4">
+              <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">
+                Advance Pipeline Stage
               </h4>
 
               <div className="flex flex-wrap gap-2">
@@ -302,11 +518,11 @@ export default function RecruiterApplicationsPage() {
                     onClick={() =>
                       setTransitionAction({
                         targetStatus: 'UNDER_REVIEW',
-                        notes: 'Recruiter started reviewing application',
+                        notes: 'Recruiter commenced candidate dossier evaluation',
                       })
                     }
                   >
-                    Move to Under Review
+                    Commence Under Review
                   </Button>
                 )}
 
@@ -316,7 +532,7 @@ export default function RecruiterApplicationsPage() {
                     onClick={() =>
                       setTransitionAction({
                         targetStatus: 'SHORTLISTED',
-                        notes: 'Shortlisted for interview rounds',
+                        notes: 'Qualified candidate shortlisted for technical interviews',
                       })
                     }
                   >
@@ -330,7 +546,7 @@ export default function RecruiterApplicationsPage() {
                     onClick={() =>
                       setTransitionAction({
                         targetStatus: 'INTERVIEW',
-                        notes: 'Advanced to interview stage',
+                        notes: 'Advanced candidate to structured interview scheduling',
                       })
                     }
                   >
@@ -346,7 +562,7 @@ export default function RecruiterApplicationsPage() {
                       onClick={() =>
                         setTransitionAction({
                           targetStatus: 'REJECTED',
-                          notes: 'Candidate did not meet current role expectations',
+                          notes: 'Candidate did not meet criteria for this opening',
                         })
                       }
                     >
@@ -358,22 +574,22 @@ export default function RecruiterApplicationsPage() {
 
             {/* Application Audit / Status History */}
             {selectedApp.statusHistory && selectedApp.statusHistory.length > 0 && (
-              <div className="border-t border-gray-200 pt-4">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-700 mb-3">
-                  Stage Transition Audit History
+              <div className="border-t border-slate-200 pt-4">
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">
+                  Stage Audit History Trail
                 </h4>
                 <div className="space-y-3">
                   {selectedApp.statusHistory.map((hist, idx) => (
-                    <div key={idx} className="flex items-start text-xs text-gray-600">
-                      <Clock className="mr-2 h-3.5 w-3.5 text-gray-400 mt-0.5 shrink-0" />
+                    <div key={idx} className="flex items-start text-xs text-slate-600">
+                      <Clock className="mr-2 h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />
                       <div>
-                        <span className="font-semibold text-gray-900">
+                        <span className="font-semibold text-slate-900">
                           {hist.fromStatus ? `${hist.fromStatus} → ` : ''}
                           {hist.toStatus}
                         </span>{' '}
-                        by {hist.changedByName || 'System'} on{' '}
-                        {new Date(hist.changedAt).toLocaleString()}
-                        {hist.notes && <div className="text-gray-500 italic mt-0.5">"{hist.notes}"</div>}
+                        by <span className="text-slate-700 font-medium">{hist.changedByName || 'System'}</span> on{' '}
+                        <span className="font-mono text-[11px] text-slate-500">{new Date(hist.changedAt).toLocaleString()}</span>
+                        {hist.notes && <div className="text-slate-500 italic mt-0.5">"{hist.notes}"</div>}
                       </div>
                     </div>
                   ))}
@@ -394,33 +610,36 @@ export default function RecruiterApplicationsPage() {
         }}
         title={`Change Stage to ${transitionAction?.targetStatus}`}
       >
-        <div className="space-y-4">
+        <div className="space-y-4 text-xs">
           {transitionError && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">{transitionError}</div>
+            <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-rose-700 font-semibold">
+              {transitionError}
+            </div>
           )}
 
-          <p className="text-sm text-gray-600">
+          <p className="text-slate-600 leading-relaxed">
             Are you sure you want to transition candidate{' '}
-            <strong>{selectedApp?.candidateName}</strong> to{' '}
-            <strong>{transitionAction?.targetStatus}</strong>?
+            <strong className="text-slate-900">{selectedApp?.candidateName}</strong> to{' '}
+            <strong className="text-slate-900">{transitionAction?.targetStatus}</strong>?
           </p>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 uppercase">
-              Transition Notes / Feedback (Optional)
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+              Internal Transition Notes / Feedback (Audit Logged)
             </label>
             <textarea
               rows={3}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-              placeholder="Internal reasoning or notes for the audit trail..."
+              className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:ring-primary-500 focus:outline-none"
+              placeholder="e.g. Cleared round 1 technical screen, proceeding to system design..."
               value={transitionNotes}
               onChange={(e) => setTransitionNotes(e.target.value)}
             />
           </div>
 
-          <div className="mt-5 flex justify-end space-x-3">
+          <div className="mt-4 flex justify-end space-x-2 pt-2 border-t border-slate-100">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => {
                 setTransitionAction(null);
                 setTransitionNotes('');
@@ -430,6 +649,7 @@ export default function RecruiterApplicationsPage() {
             </Button>
             <Button
               variant={transitionAction?.targetStatus === 'REJECTED' ? 'danger' : 'primary'}
+              size="sm"
               loading={updateStatusMutation.isPending}
               onClick={handleExecuteTransition}
             >

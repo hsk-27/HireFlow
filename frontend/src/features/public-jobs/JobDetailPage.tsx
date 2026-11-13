@@ -71,7 +71,7 @@ export const JobDetailPage: React.FC = () => {
 
   const handleApplyClick = () => {
     if (!isAuthenticated) {
-      navigate('/auth/login', { state: { from: `/jobs/${id}` } });
+      navigate('/login', { state: { from: `/jobs/${id}` } });
       return;
     }
     setErrorMessage('');

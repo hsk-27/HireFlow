@@ -7,12 +7,13 @@ import Button from '../../components/common/Button';
 import Modal from '../../components/common/Modal';
 import StatusBadge from '../../components/common/StatusBadge';
 import Pagination from '../../components/common/Pagination';
-import { Plus, Briefcase, MapPin, DollarSign, Users, CheckCircle, XCircle, Archive, AlertCircle } from 'lucide-react';
+import { Plus, Briefcase, MapPin, DollarSign, Users, CheckCircle, XCircle, Archive, AlertCircle, Copy, Search } from 'lucide-react';
 
 export default function RecruiterJobsPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -148,8 +149,46 @@ export default function RecruiterJobsPage() {
     createJobMutation.mutate(payload);
   };
 
-  const jobs = jobsResponse?.content || [];
+  const handleCloneJob = (job: Job) => {
+    const elig = job.eligibilityCriteria || job.eligibility;
+    setFormData({
+      title: `${job.title} (Clone)`,
+      department: job.department || 'Engineering',
+      location: job.location || '',
+      workplaceType: (job.workplaceType as string) || 'HYBRID',
+      employmentType: (job.employmentType as string) || 'FULL_TIME',
+      description: job.description || '',
+      requirements: job.requirements || job.requiredQualifications || '',
+      responsibilities: job.responsibilities || '',
+      salaryMin: job.salaryMin !== undefined && job.salaryMin !== null ? String(job.salaryMin) : '',
+      salaryMax: job.salaryMax !== undefined && job.salaryMax !== null ? String(job.salaryMax) : '',
+      currency: job.currency || job.salaryCurrency || 'USD',
+      applicationDeadline: '',
+      minCgpa: elig?.minCgpa !== undefined && elig?.minCgpa !== null ? String(elig.minCgpa) : '',
+      min10thPercent: elig?.min10thPercent !== undefined && elig?.min10thPercent !== null ? String(elig.min10thPercent) : '',
+      min12thPercent: elig?.min12thPercent !== undefined && elig?.min12thPercent !== null ? String(elig.min12thPercent) : '',
+      maxBacklogs: elig?.maxBacklogs !== undefined && elig?.maxBacklogs !== null ? String(elig.maxBacklogs) : '0',
+      allowedDegrees: (elig?.allowedDegrees || elig?.eligibleDegrees || ['B.Tech', 'B.E.', 'M.Tech', 'MCA']).join(', '),
+      allowedBranches: (elig?.allowedBranches || elig?.eligibleBranches || ['Computer Science', 'Information Technology', 'Electronics']).join(', '),
+      graduationYears: (elig?.graduationYears || [2024, 2025, 2026]).join(', '),
+      strictEnforcement: elig?.strictEnforcement ?? true,
+    });
+    setFormError(null);
+    setIsCreateModalOpen(true);
+  };
+
+  const rawJobs: Job[] = jobsResponse?.content || [];
   const totalPages = jobsResponse?.totalPages || 0;
+
+  const filteredJobs = rawJobs.filter((j) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      j.title.toLowerCase().includes(q) ||
+      (j.department && j.department.toLowerCase().includes(q)) ||
+      (j.location && j.location.toLowerCase().includes(q))
+    );
+  });
 
   return (
     <div className="space-y-6">
@@ -163,30 +202,43 @@ export default function RecruiterJobsPage() {
           </p>
         </div>
         <div>
-          <Button variant="primary" onClick={() => setIsCreateModalOpen(true)}>
+          <Button variant="primary" onClick={() => { resetForm(); setIsCreateModalOpen(true); }}>
             <Plus className="mr-2 h-4 w-4" /> Post New Job
           </Button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        {['', 'PUBLISHED', 'DRAFT', 'CLOSED', 'ARCHIVED'].map((st) => (
-          <button
-            key={st}
-            onClick={() => {
-              setStatusFilter(st);
-              setPage(0);
-            }}
-            className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-              statusFilter === st
-                ? 'bg-primary-700 text-white shadow-sm'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            {st === '' ? 'All Statuses' : st}
-          </button>
-        ))}
+      {/* Filters & Search */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {['', 'PUBLISHED', 'DRAFT', 'CLOSED', 'ARCHIVED'].map((st) => (
+            <button
+              key={st}
+              onClick={() => {
+                setStatusFilter(st);
+                setPage(0);
+              }}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                statusFilter === st
+                  ? 'bg-primary-700 text-white shadow-sm'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {st === '' ? 'All Statuses' : st}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative w-full sm:w-64">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search role or dept..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 py-1.5 pl-9 pr-3 text-xs focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 bg-white"
+          />
+        </div>
       </div>
 
       {/* Jobs List */}
@@ -198,15 +250,17 @@ export default function RecruiterJobsPage() {
         <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
           Failed to load job postings.
         </div>
-      ) : jobs.length === 0 ? (
+      ) : filteredJobs.length === 0 ? (
         <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center bg-white">
           <Briefcase className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">No job postings found</h3>
+          <h3 className="mt-2 text-sm font-semibold text-gray-900">
+            {searchQuery ? 'No matching requisitions' : 'No job postings found'}
+          </h3>
           <p className="mt-1 text-sm text-gray-500">
-            Get started by creating your first job requisition.
+            {searchQuery ? 'Try clearing your search query.' : 'Get started by creating your first job requisition.'}
           </p>
           <div className="mt-6">
-            <Button variant="primary" onClick={() => setIsCreateModalOpen(true)}>
+            <Button variant="primary" onClick={() => { resetForm(); setIsCreateModalOpen(true); }}>
               <Plus className="mr-2 h-4 w-4" /> Create Requisition
             </Button>
           </div>
@@ -225,7 +279,7 @@ export default function RecruiterJobsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
-              {jobs.map((job) => (
+              {filteredJobs.map((job) => (
                 <tr key={job.id} className="hover:bg-gray-50/70 transition">
                   <td className="px-6 py-4">
                     <div className="font-bold text-gray-900">{job.title}</div>
@@ -254,7 +308,15 @@ export default function RecruiterJobsPage() {
                   <td className="px-6 py-4 text-xs text-gray-500">
                     {new Date(job.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 text-right space-x-2">
+                  <td className="px-6 py-4 text-right space-x-1 sm:space-x-2">
+                    <button
+                      onClick={() => handleCloneJob(job)}
+                      className="inline-flex items-center rounded bg-gray-50 border border-gray-200 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
+                      title="Clone this requisition"
+                    >
+                      <Copy className="mr-1 h-3 w-3 text-gray-500" />
+                      Clone
+                    </button>
                     {job.status === 'DRAFT' && (
                       <button
                         onClick={() => updateStatusMutation.mutate({ jobId: job.id, status: 'PUBLISHED' })}

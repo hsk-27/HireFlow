@@ -70,24 +70,28 @@ The database is pre-seeded with realistic data across all roles. You can click t
 ---
 
 ### Scenario 2: Recruiter Job Posting & Hiring Pipeline Progression
-**Goal:** Verify job requisition, strict eligibility criteria, applicant review, interview rounds, and offer extension.
+**Goal:** Verify job requisition, cloning, strict eligibility criteria, Kanban pipeline view, applicant review, interview rounds, and offer extension.
 
 1. Sign in as **Verified Recruiter** (`recruiter@techcorp.com`).
 2. Navigate to **Job Openings** (`/recruiter/jobs`):
-   - Click **"Create Job"**.
+   - Click **"Post New Job"**.
    - Enter Job Title: `Senior Distributed Systems Architect`, Department: `Engineering`, Location: `San Francisco, CA (Hybrid)`.
    - Set Minimum Experience: `5 years`, Base Salary: `$160,000 - $210,000`.
-   - Click **"Configure Eligibility Criteria"**:
+   - Configure **Academic & Experience Eligibility Criteria**:
      - Minimum CGPA: `7.5`
      - Maximum Active Backlogs: `0`
      - Eligible Degrees: `B.Tech`, `M.Tech`, `B.S.`
      - Eligible Branches: `Computer Science`, `Software Engineering`
    - Save the job as `DRAFT`.
-3. On the job row, click **"Publish"**:
-   - Verify status transitions from `DRAFT` to `PUBLISHED`.
+3. On the job row, test the **Requisition Actions**:
+   - Click **"Clone"**: verify that a new creation modal opens pre-filled with all details and criteria from the requisition.
+   - Click **"Publish"**: verify status transitions from `DRAFT` to `PUBLISHED`.
+   - Test the real-time search input: search by title or department.
 4. Navigate to **Candidate Pipeline** (`/recruiter/applications`):
-   - You will see existing applicants (e.g., Jane Doe).
-   - Click on an application to open the **Applicant Review Drawer**:
+   - **Kanban Board vs List View:** Toggle between `List View` and `Pipeline Board`. Notice the 6 columnar hiring stages (`Submitted`, `Under Review`, `Shortlisted`, `Interview`, `Offered`, `Hired`) with live candidate counts.
+   - **Search & Filters:** Search by candidate name or email in real time; filter by Automated Eligibility status (`Eligible`, `Review Required`, `Ineligible`).
+   - **Export CSV:** Click the **"Export CSV"** button and verify your browser downloads the full pipeline spreadsheet report.
+   - Click on any applicant card/row to open the **Applicant Review Drawer**:
      - Verify candidate CGPA, education, experience, and uploaded resume.
      - Verify the **Automated Eligibility Status** badge (`ELIGIBLE`).
 5. Progress the candidate's stage:
@@ -121,7 +125,7 @@ The database is pre-seeded with realistic data across all roles. You can click t
 ---
 
 ### Scenario 3: Candidate Application, Interview & Offer Acceptance
-**Goal:** Verify candidate application submission, document management, and offer acceptance.
+**Goal:** Verify candidate application submission, document management, stage progress stepper, and offer acceptance.
 
 1. Sign in as **Active Candidate** (`jane.candidate@example.com`).
 2. Navigate to **Job Board** (`/jobs`):
@@ -133,8 +137,8 @@ The database is pre-seeded with realistic data across all roles. You can click t
      - Confirm your stored resume is attached.
      - Click **"Submit Application"**.
 3. Navigate to **My Applications** (`/candidate/applications`):
-   - Verify the application is listed with status `SUBMITTED`.
-   - Click to view application timeline and stage history.
+   - Notice the **6-Step Visual Application Stepper** on each application card (`Submitted` ➔ `Under Review` ➔ `Shortlisted` ➔ `Interview` ➔ `Offer Extended` ➔ `Hired`), indicating exactly where your candidacy stands with live highlight states.
+   - Click to expand application timeline, status history, and job details.
 4. Check **Notifications** (bell icon in top navbar):
    - Verify notification alerts have arrived for interview scheduling and offer extensions.
    - Click **"Mark as Read"**.
@@ -143,6 +147,8 @@ The database is pre-seeded with realistic data across all roles. You can click t
    - Click **"Review Offer Details"**: inspect salary, benefits, and expiry date.
    - Click **"Accept Offer"**:
      - Confirm modal acceptance.
+     - Verify status changes to green `ACCEPTED`.
+     - Verify your application status changes to `HIRED`!
      - Verify status changes to green `ACCEPTED`.
      - Verify your application status changes to `HIRED`!
 
