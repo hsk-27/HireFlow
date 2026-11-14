@@ -3,6 +3,7 @@ target/
 *.class
 *.jar
 *.war
+*.zip
 .idea/
 *.iml
 .vscode/
