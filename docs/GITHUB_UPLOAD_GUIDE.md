@@ -112,21 +112,17 @@ Enter a commit message like `chore: add docker infrastructure and candidate impo
 
 ## 4. Method 3: Generating a Clean Source ZIP for Release
 
-If you need a clean archive of the project for a **GitHub Release**, portfolio submission, or sharing with an examiner without the 200MB+ `node_modules` or `target` folders, run this PowerShell script:
+If you need a clean archive of the project for a **GitHub Release**, portfolio submission, or sharing with an examiner without the 200MB+ `node_modules` or `target` folders, run this Git command from the project directory:
 
 ```powershell
 # Open terminal at repository root
 cd C:\Users\Dell\.gemini\antigravity\scratch\HireFlow
 
-# Generate clean zip package excluding build artifacts
-$destination = "..\HireFlow-Source-Clean.zip"
-Get-ChildItem -Path . -Exclude "target", "node_modules", "dist", ".git", ".pytest_cache", "__pycache__" | 
-  Compress-Archive -DestinationPath $destination -Force
-
-Write-Host "Pristine source bundle created at: $destination"
+# Generate pristine zip package containing 100% of tracked source code & documentation
+git archive -o ..\HireFlow-Source-Clean.zip HEAD
 ```
 
-This creates a lightweight `HireFlow-Source-Clean.zip` (< 15 MB) that can be dragged into GitHub Releases or sent directly to evaluators.
+This instantly creates `HireFlow-Source-Clean.zip` (~360 KB) in `C:\Users\Dell\.gemini\antigravity\scratch\`. It contains all source files, configurations, database migrations, and documentation, with zero build clutter. It is ideal for drag-and-drop into GitHub Releases or emailing to reviewers.
 
 ---
 
