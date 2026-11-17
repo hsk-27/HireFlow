@@ -222,7 +222,6 @@ Complete engineering specifications, database diagrams, security models, and QA 
 
 | Document | Topic & Content |
 |---|---|
-| [GitHub Upload & Deployment Guide](docs/GITHUB_UPLOAD_GUIDE.md) | **Step-by-step instructions for uploading to GitHub via web browser or CLI** |
 | [Architecture Specification](docs/ARCHITECTURE.md) | Modular monolith design, domain boundaries, and sequence diagrams |
 | [Database Design & ER Diagram](docs/DATABASE_DESIGN.md) | 22 normalized 3NF tables, constraints, indexes, and Mermaid ER schema |
 | [API Documentation](docs/API_DOCUMENTATION.md) | Complete REST API endpoint reference and error codes |
