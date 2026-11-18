@@ -233,7 +233,6 @@ Complete engineering specifications, database diagrams, security models, and QA 
 | [AWS Cloud Deployment Guide](docs/AWS_DEPLOYMENT.md) | Production architecture on AWS (ECS Fargate, RDS PostgreSQL, S3) |
 | [Testing Strategy & Report](docs/TESTING_STRATEGY.md) | Testing pyramid, unit tests, integration tests, and Vitest suites |
 | [Implementation Log](docs/IMPLEMENTATION_LOG.md) | Detailed chronological record of all implementation phases |
-| [Known Limitations & Roadmap](docs/KNOWN_LIMITATIONS.md) | Architectural tradeoffs and future scalability milestones |
 | [Developer Contribution Guide](docs/DEVELOPMENT_GUIDE.md) | Branching guidelines, commit message conventions, and coding style |
 
 ---

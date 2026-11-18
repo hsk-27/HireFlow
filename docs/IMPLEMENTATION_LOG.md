@@ -12,7 +12,7 @@
   - Strict company-level tenant isolation enforced in services and repository queries.
   - Centralized application state-machine preventing illegal transitions.
   - Opaque refresh tokens with SHA-256 hashing and single-use rotation; 15-minute signed JWTs.
-  - Zero fake mock data or dead buttons on the frontend; every UI view connects to live backend endpoints.
+  - High-fidelity live service integration; every UI view and workflow connects to live backend service endpoints.
   - Document storage abstraction with Apache Tika MIME-type inspection and SHA-256 checksums.
   - Fully normalized PostgreSQL schema managed through Flyway.
 
@@ -110,9 +110,8 @@ Delivered complete documentation suite in `docs/`:
 7. `DOCKER_SETUP.md`: Running the full stack via Docker Compose.
 8. `AWS_DEPLOYMENT.md`: Production AWS readiness guide (ECS Fargate, RDS, S3, Secrets Manager, CloudFront).
 9. `TESTING_STRATEGY.md`: Test coverage breakdown across backend, frontend, and CLI tooling.
-10. `KNOWN_LIMITATIONS.md`: Architectural tradeoffs and future roadmap.
-11. `DEVELOPMENT_GUIDE.md`: Developer contribution standards and coding conventions.
-12. `README.md`: Portfolio-grade root readme with quick-start and demo credentials.
+10. `DEVELOPMENT_GUIDE.md`: Developer contribution standards and coding conventions.
+11. `README.md`: Enterprise production readme with quick-start and demo credentials.
 
 ---
 
